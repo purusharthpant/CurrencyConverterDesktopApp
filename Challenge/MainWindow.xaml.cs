@@ -11,7 +11,8 @@ namespace Challenge
         public MainWindow()
         {
             InitializeComponent();
-            ICurrencyService service = new CurrencyService();
+            ICurrencyRepository repository = new CurrencyRepository();
+            ICurrencyService service = new CurrencyService(repository);
             DataContext = new MainViewModel(service);
         }
     }
