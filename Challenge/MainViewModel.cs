@@ -1,9 +1,12 @@
 ﻿using Challenge.Models;
 using Challenge.Service;
+using Newtonsoft.Json;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace Challenge
 {
@@ -203,9 +206,20 @@ namespace Challenge
                     HistoricalRates.Add(item);
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                MessageBox.Show($"Network error: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (JsonException ex)
+            {
+                MessageBox.Show($"Data parsing error: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             catch (Exception ex)
             {
-                // Handle errors - could show MessageBox or use error property
+                MessageBox.Show($"Unexpected error: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
