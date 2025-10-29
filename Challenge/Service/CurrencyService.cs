@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Challenge.Service
 {
-    public class CurrencyService
+    public class CurrencyService : ICurrencyService
     {
         private static readonly HttpClient _httpClient;
         private const string BASE_URL = "https://api.frankfurter.dev/v1/";
