@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using Challenge.Service;
+using System.Net.Http;
+using System.Windows;
 
 namespace Challenge
 {
@@ -9,7 +11,8 @@ namespace Challenge
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            ICurrencyService service = new CurrencyService();
+            DataContext = new MainViewModel(service);
         }
     }
 }

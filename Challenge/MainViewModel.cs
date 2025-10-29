@@ -12,7 +12,7 @@ namespace Challenge
 {
     public class MainViewModel : ViewModelBase
     {
-        private readonly CurrencyService _currencyService;
+        private readonly ICurrencyService _currencyService;
 
         private ObservableCollection<string> _availableCurrencies;
         private string _selectedSourceCurrency;
@@ -115,9 +115,9 @@ namespace Challenge
             set => SetProperty(ref _isLoading, value);
         }
 
-        public MainViewModel()
+        public MainViewModel(ICurrencyService currencyService)
         {
-            _currencyService = new CurrencyService();
+            _currencyService = currencyService;
 
             HistoricalRates = new ObservableCollection<CurrencyRate>();
 

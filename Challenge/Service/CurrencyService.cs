@@ -9,15 +9,12 @@ namespace Challenge.Service
 {
     public class CurrencyService : ICurrencyService
     {
-        private static readonly HttpClient _httpClient;
+        private static HttpClient _httpClient;
         private const string BASE_URL = "https://api.frankfurter.dev/v1/";
 
-        static CurrencyService()
+        public CurrencyService()
         {
-            _httpClient = new HttpClient
-            {
-                BaseAddress = new Uri(BASE_URL)
-            };
+            _httpClient.BaseAddress = new Uri(BASE_URL);
         }
 
         public async Task<LatestRateResponse> GetLatestRateAsync(string fromCurrency, string toCurrency)
