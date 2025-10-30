@@ -13,13 +13,15 @@ namespace Challenge.Service
     public class CurrencyRepository : ICurrencyRepository
     {
         private readonly HttpClient _httpClient;
+        private readonly CacheService _cacheService;
 
-        public CurrencyRepository()
+        public CurrencyRepository(CacheService cacheService = null)
         {
             _httpClient = new HttpClient
             {
                 BaseAddress = new Uri("https://api.frankfurter.dev/v1/")
             };
+            _cacheService = cacheService;
         }
 
         public async Task<Dictionary<string, string>> GetAvailableCurrenciesAsync(CancellationToken token)
@@ -42,6 +44,11 @@ namespace Challenge.Service
 
         public async Task<HistoricalRateResponse> GetHistoricalRatesAsync(string from, string to, DateTime start, DateTime end, CancellationToken token)
         {
+            if (_cacheService != null && _cacheService.TryGetValue(from, to, start, end, out var cachedValue))
+            {
+                return (HistoricalRateResponse)cachedValue;
+            }
+
             string startStr = start.ToString("yyyy-MM-dd");
             string endStr = end.ToString("yyyy-MM-dd");
             var url = $"{startStr}..{endStr}?base={from}&symbols={to}";
@@ -49,7 +56,14 @@ namespace Challenge.Service
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<HistoricalRateResponse>(json);
+            var result = JsonConvert.DeserializeObject<HistoricalRateResponse>(json);
+            
+            if (_cacheService != null)
+            {
+                _cacheService.Set(from, to, start, end, result);
+            }
+
+            return result;
         }
     }
 }
