@@ -8,12 +8,17 @@ namespace Challenge.Service.CacheService
 {
     public sealed class CacheService : ICacheService
     {
+        #region Private Fields
+
         private readonly Dictionary<string, CacheEntry> _cache;
         private readonly ReaderWriterLockSlim _cacheLock;
         private readonly int _maxAge; // in minutes
         private readonly int _maxElements;
         private readonly string _strategy; // "time" or "size"
 
+        #endregion
+
+        #region Constructor
         public CacheService(int maxAge, int maxElements, string strategy)
         {
             _maxAge = maxAge;
@@ -23,11 +28,9 @@ namespace Challenge.Service.CacheService
             _cacheLock = new ReaderWriterLockSlim();
         }
 
-        private string GenerateCacheKey(string from, string to, DateTime start, DateTime end)
-        {
-            return $"{from}_{to}_{start:yyyy-MM-dd}_{end:yyyy-MM-dd}";
-        }
+        #endregion
 
+        #region Public Methods
         public bool TryGetValue(string from, string to, DateTime start, DateTime end, out object value)
         {
             value = null;
@@ -71,6 +74,22 @@ namespace Challenge.Service.CacheService
             }
         }
 
+        public void Clear()
+        {
+            _cacheLock.EnterWriteLock();
+            try
+            {
+                _cache.Clear();
+            }
+            finally
+            {
+                _cacheLock.ExitWriteLock();
+            }
+        }
+
+        #endregion
+
+        #region Private Methods
         private void CleanupCache()
         {
             if (_strategy == "time")
@@ -100,17 +119,10 @@ namespace Challenge.Service.CacheService
             }
         }
 
-        public void Clear()
+        private string GenerateCacheKey(string from, string to, DateTime start, DateTime end)
         {
-            _cacheLock.EnterWriteLock();
-            try
-            {
-                _cache.Clear();
-            }
-            finally
-            {
-                _cacheLock.ExitWriteLock();
-            }
+            return $"{from}_{to}_{start:yyyy-MM-dd}_{end:yyyy-MM-dd}";
         }
+        #endregion
     }
 }

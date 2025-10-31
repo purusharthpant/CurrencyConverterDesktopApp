@@ -59,10 +59,7 @@ namespace Challenge.Service
             var json = await response.Content.ReadAsStringAsync();
             var result = JsonConvert.DeserializeObject<HistoricalRateResponse>(json);
             
-            if (_cacheService != null)
-            {
-                _cacheService.Set(from, to, start, end, result);
-            }
+            _cacheService?.Set(from, to, start, end, result);
 
             return result;
         }

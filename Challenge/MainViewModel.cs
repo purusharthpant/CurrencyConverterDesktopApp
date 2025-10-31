@@ -12,6 +12,7 @@ namespace Challenge
 {
     public class MainViewModel : ViewModelBase
     {
+        #region Private Fields
         private readonly ICurrencyService _currencyService;
 
         private ObservableCollection<string> _availableCurrencies;
@@ -24,7 +25,9 @@ namespace Challenge
         private string _latestRateDate;
         private ObservableCollection<CurrencyRate> _historicalRates;
         private bool _isLoading;
+        #endregion
 
+        #region Properties
         public ObservableCollection<string> AvailableCurrencies
         {
             get => _availableCurrencies;
@@ -115,6 +118,9 @@ namespace Challenge
             set => SetProperty(ref _isLoading, value);
         }
 
+        #endregion
+
+        #region Constructor
         public MainViewModel(ICurrencyService currencyService)
         {
             _currencyService = currencyService;
@@ -128,7 +134,9 @@ namespace Challenge
 
             _ = InitializeAsync();
         }
+        #endregion
 
+        #region Functions
         private async Task InitializeAsync()
         {
             IsLoading = true;
@@ -144,9 +152,20 @@ namespace Challenge
                     SelectedTargetCurrency = "USD";
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                MessageBox.Show($"Network error: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (JsonException ex)
+            {
+                MessageBox.Show($"Data parsing error: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             catch (Exception ex)
             {
-                // Handle error
+                MessageBox.Show($"Unexpected error: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -226,5 +245,7 @@ namespace Challenge
                 IsLoading = false;
             }
         }
+        #endregion
+
     }
 }
