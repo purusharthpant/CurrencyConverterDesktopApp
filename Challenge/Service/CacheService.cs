@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Challenge.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
 namespace Challenge.Service
 {
-    public class CacheService
+    public sealed class CacheService : ICacheService
     {
-        private readonly Dictionary<string, CacheEntry> _cache = new Dictionary<string, CacheEntry>();
-        private readonly ReaderWriterLockSlim _cacheLock = new ReaderWriterLockSlim();
+        private readonly Dictionary<string, CacheEntry> _cache;
+        private readonly ReaderWriterLockSlim _cacheLock;
         private readonly int _maxAge; // in minutes
         private readonly int _maxElements;
         private readonly string _strategy; // "time" or "size"
@@ -18,6 +19,8 @@ namespace Challenge.Service
             _maxAge = maxAge;
             _maxElements = maxElements;
             _strategy = strategy.ToLower();
+            _cache = new Dictionary<string, CacheEntry>();
+            _cacheLock = new ReaderWriterLockSlim();
         }
 
         private string GenerateCacheKey(string from, string to, DateTime start, DateTime end)
@@ -108,12 +111,6 @@ namespace Challenge.Service
             {
                 _cacheLock.ExitWriteLock();
             }
-        }
-
-        private class CacheEntry
-        {
-            public object Value { get; set; }
-            public DateTime CreatedAt { get; set; }
         }
     }
 }

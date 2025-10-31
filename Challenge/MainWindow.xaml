@@ -92,7 +92,7 @@
                         <DataGridTextColumn Header="Converted Amount" 
                                             Binding="{Binding ConvertedAmount, StringFormat='{}{0:N2}'}" 
                                             Width="*"/>
-                        <DataGridTextColumn Header="Currency" 
+                        <DataGridTextColumn Header="Target Currency" 
                                             Binding="{Binding Currency}" 
                                             Width="*"/>
                     </DataGrid.Columns>

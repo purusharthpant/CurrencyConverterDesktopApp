@@ -13,9 +13,9 @@ namespace Challenge.Service
     public class CurrencyRepository : ICurrencyRepository
     {
         private readonly HttpClient _httpClient;
-        private readonly CacheService _cacheService;
+        private readonly ICacheService _cacheService;
 
-        public CurrencyRepository(CacheService cacheService = null)
+        public CurrencyRepository(ICacheService cacheService = null)
         {
             _httpClient = new HttpClient
             {
