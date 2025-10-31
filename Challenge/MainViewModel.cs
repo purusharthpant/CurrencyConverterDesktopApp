@@ -1,5 +1,5 @@
 ﻿using Challenge.Models;
-using Challenge.Service;
+using Challenge.Service.CurrencyService;
 using Newtonsoft.Json;
 using System;
 using System.Collections.ObjectModel;

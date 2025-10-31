@@ -1,4 +1,6 @@
 ﻿using Challenge.Service;
+using Challenge.Service.CacheService;
+using Challenge.Service.CurrencyService;
 using System.Configuration;
 using System.Net.Http;
 using System.Windows;

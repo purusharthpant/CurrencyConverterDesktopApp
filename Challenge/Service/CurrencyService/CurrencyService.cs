@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Challenge.Service
+namespace Challenge.Service.CurrencyService
 {
     public class CurrencyService : ICurrencyService
     {

@@ -1,4 +1,5 @@
 ﻿using Challenge.Models;
+using Challenge.Service.CacheService;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
