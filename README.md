@@ -11,7 +11,7 @@ Repository for the coding challenge for creating a currency converter with Frank
 3. According to MVVM:
    a. **View:** MainWindow.xaml/MainWindow.xaml.cs - For defining the UI components and the respective code behind.
    b. **Models:** -->  
-        APIResponseModels : LatestRateResponse, HistoricalRateResponse - For handling the Latest and the historical data
+        APIResponseModels : LatestRateResponse, HistoricalRateResponse - For handling the Latest and the historical data   
         CurrencyRate - For handling currency rates being displayed in the Historical data  
         CacheEntry - For handling cache entries in the implemented caching mechanism.  
    c. **ViewModels:**  MainViewModel.cs - For propagating refreshing the UI for changes, by using service calls to the Frankfurter API.
