@@ -1,4 +1,5 @@
-﻿using Challenge.Models;
+﻿using Challenge.Helpers;
+using Challenge.Models;
 using Challenge.Service.CurrencyService;
 using Newtonsoft.Json;
 using System;
@@ -24,7 +25,7 @@ namespace Challenge
         private decimal _latestConvertedAmount;
         private string _latestRateDate;
         private ObservableCollection<CurrencyRate> _historicalRates;
-        private bool _isLoading;
+        private bool _isInitializing;
         #endregion
 
         #region Properties
@@ -41,7 +42,8 @@ namespace Challenge
             {
                 if (SetProperty(ref _selectedSourceCurrency, value))
                 {
-                    _ = UpdateRatesAsync();
+                    if(!_isInitializing)
+                        _ = UpdateRatesAsync();
                 }
             }
         }
@@ -53,7 +55,8 @@ namespace Challenge
             {
                 if (SetProperty(ref _selectedTargetCurrency, value))
                 {
-                    _ = UpdateRatesAsync();
+                    if(!_isInitializing)
+                        _ = UpdateRatesAsync();
                 }
             }
         }
@@ -65,7 +68,8 @@ namespace Challenge
             {
                 if (SetProperty(ref _amount, value))
                 {
-                    _ = UpdateRatesAsync();
+                    if (!_isInitializing)
+                        _ = UpdateRatesAsync();
                 }
             }
         }
@@ -77,7 +81,8 @@ namespace Challenge
             {
                 if (SetProperty(ref _startDate, value))
                 {
-                    _ = UpdateRatesAsync();
+                    if(!_isInitializing)
+                        _ = UpdateRatesAsync();
                 }
             }
         }
@@ -89,7 +94,8 @@ namespace Challenge
             {
                 if (SetProperty(ref _endDate, value))
                 {
-                    _ = UpdateRatesAsync();
+                    if(!_isInitializing)
+                        _ = UpdateRatesAsync();
                 }
             }
         }
@@ -112,36 +118,33 @@ namespace Challenge
             set => SetProperty(ref _historicalRates, value);
         }
 
-        public bool IsLoading
-        {
-            get => _isLoading;
-            set => SetProperty(ref _isLoading, value);
-        }
-
         #endregion
 
         #region Constructor
         public MainViewModel(ICurrencyService currencyService)
         {
             _currencyService = currencyService;
-
             HistoricalRates = new ObservableCollection<CurrencyRate>();
 
-            // Set default dates
+            _ = InitializeAsync();
+        }
+
+        private void SetDefaults()
+        {
             StartDate = DateTime.Now.AddMonths(-1);
             EndDate = DateTime.Now;
             Amount = 100;
-
-            _ = InitializeAsync();
         }
         #endregion
 
         #region Functions
         private async Task InitializeAsync()
         {
-            IsLoading = true;
+            _isInitializing = true;
             try
             {
+                SetDefaults();
+
                 var currencies = await _currencyService.GetAvailableCurrenciesAsync();
                 AvailableCurrencies = new ObservableCollection<string>(currencies.Keys);
 
@@ -154,61 +157,54 @@ namespace Challenge
             }
             catch (HttpRequestException ex)
             {
-                MessageBox.Show($"Network error: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                UIHelper.ShowError(ex);
             }
             catch (JsonException ex)
             {
-                MessageBox.Show($"Data parsing error: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                UIHelper.ShowError(ex);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Unexpected error: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+               UIHelper.ShowError(ex);
             }
             finally
             {
-                IsLoading = false;
+                _isInitializing = false;
+                await UpdateRatesAsync();
             }
         }
 
         private async Task UpdateRatesAsync()
         {
-            if (string.IsNullOrEmpty(SelectedSourceCurrency) ||
-                string.IsNullOrEmpty(SelectedTargetCurrency) ||
-                Amount <= 0)
+            if (Amount < 0)
+            {
+                UIHelper.ShowInfo("Invalid amount entered, please enter a valid amount");
                 return;
+            }
 
-            IsLoading = true;
             try
             {
                 // Fetch latest rate
-                var latestTask = _currencyService.GetLatestRateAsync(
+                var latestRateResponse = await _currencyService.GetLatestRateAsync(
                     SelectedSourceCurrency,
                     SelectedTargetCurrency);
 
                 // Fetch historical rates
-                var historicalTask = _currencyService.GetHistoricalRatesAsync(
+                var historicalRateResponse = await _currencyService.GetHistoricalRatesAsync(
                     SelectedSourceCurrency,
                     SelectedTargetCurrency,
                     StartDate,
                     EndDate);
 
-                await Task.WhenAll(latestTask, historicalTask);
-
-                var latestResponse = await latestTask;
-                var historicalResponse = await historicalTask;
-
                 // Process latest rate
-                if (latestResponse.Rates.TryGetValue(SelectedTargetCurrency, out var rate))
+                if (latestRateResponse.Rates.TryGetValue(SelectedTargetCurrency, out var rate))
                 {
                     LatestConvertedAmount = Amount * rate;
-                    LatestRateDate = latestResponse.Date;
+                    LatestRateDate = latestRateResponse.Date;
                 }
 
                 // Process historical rates using LINQ
-                var historicalList = historicalResponse.Rates
+                var historicalList = historicalRateResponse.Rates
                     .OrderBy(kvp => kvp.Key)
                     .Select(kvp => new CurrencyRate
                     {
@@ -227,25 +223,17 @@ namespace Challenge
             }
             catch (HttpRequestException ex)
             {
-                MessageBox.Show($"Network error: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                UIHelper.ShowError(ex);
             }
             catch (JsonException ex)
             {
-                MessageBox.Show($"Data parsing error: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                UIHelper.ShowError(ex);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Unexpected error: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsLoading = false;
+                UIHelper.ShowError(ex);
             }
         }
         #endregion
-
     }
 }

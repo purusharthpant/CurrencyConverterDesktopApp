@@ -1,6 +1,8 @@
 ﻿using Challenge.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Threading;
 
@@ -10,22 +12,21 @@ namespace Challenge.Service.CacheService
     {
         #region Private Fields
 
-        private readonly Dictionary<string, CacheEntry> _cache;
-        private readonly ReaderWriterLockSlim _cacheLock;
-        private readonly int _maxAge; // in minutes
-        private readonly int _maxElements;
-        private readonly string _strategy; // "time" or "size"
+        private static readonly ConcurrentDictionary<string, CacheEntry> _cache;
+        private static readonly ReaderWriterLockSlim _cacheLock;
+        private static readonly int _maxAge; // in minutes
+        private static readonly int _maxElements;
+        private static readonly string _strategy; // "time" or "size"
 
         #endregion
 
         #region Constructor
-        public CacheService(int maxAge, int maxElements, string strategy)
+        static CacheService()
         {
-            _maxAge = maxAge;
-            _maxElements = maxElements;
-            _strategy = strategy.ToLower();
-            _cache = new Dictionary<string, CacheEntry>();
-            _cacheLock = new ReaderWriterLockSlim();
+            _maxAge = int.Parse(ConfigurationManager.AppSettings["CacheMaxAge"] ?? "60");
+            _maxElements = int.Parse(ConfigurationManager.AppSettings["CacheMaxElements"] ?? "100");
+            _strategy = ConfigurationManager.AppSettings["CacheStrategy"] ?? "time"; ;
+            _cache = new ConcurrentDictionary<string, CacheEntry>();
         }
 
         #endregion
@@ -36,7 +37,6 @@ namespace Challenge.Service.CacheService
             value = null;
             string key = GenerateCacheKey(from, to, start, end);
 
-            _cacheLock.EnterReadLock();
             try
             {
                 if (_cache.TryGetValue(key, out var entry))
@@ -52,9 +52,9 @@ namespace Challenge.Service.CacheService
                 }
                 return false;
             }
-            finally
+            catch
             {
-                _cacheLock.ExitReadLock();
+                return false;
             }
         }
 
@@ -62,28 +62,25 @@ namespace Challenge.Service.CacheService
         {
             string key = GenerateCacheKey(from, to, start, end);
 
-            _cacheLock.EnterWriteLock();
             try
             {
                 _cache[key] = new CacheEntry { Value = value, CreatedAt = DateTime.UtcNow };
                 CleanupCache();
             }
-            finally
+            catch
             {
-                _cacheLock.ExitWriteLock();
             }
         }
 
         public void Clear()
         {
-            _cacheLock.EnterWriteLock();
             try
             {
                 _cache.Clear();
             }
-            finally
+            catch
             {
-                _cacheLock.ExitWriteLock();
+
             }
         }
 
@@ -102,7 +99,7 @@ namespace Challenge.Service.CacheService
 
                 foreach (var key in expiredKeys)
                 {
-                    _cache.Remove(key);
+                    _cache.TryRemove(key, out _);
                 }
             }
             else if (_strategy == "size")
@@ -114,7 +111,7 @@ namespace Challenge.Service.CacheService
                         .First()
                         .Key;
 
-                    _cache.Remove(oldestKey);
+                    _cache.TryRemove(oldestKey, out _);
                 }
             }
         }
