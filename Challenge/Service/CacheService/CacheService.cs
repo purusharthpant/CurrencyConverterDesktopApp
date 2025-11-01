@@ -1,9 +1,12 @@
-﻿using Challenge.Models;
+﻿using Challenge.Helpers;
+using Challenge.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 
 namespace Challenge.Service.CacheService
@@ -13,7 +16,6 @@ namespace Challenge.Service.CacheService
         #region Private Fields
 
         private static readonly ConcurrentDictionary<string, CacheEntry> _cache;
-        private static readonly ReaderWriterLockSlim _cacheLock;
         private static readonly int _maxAge; // in minutes
         private static readonly int _maxElements;
         private static readonly string _strategy; // "time" or "size"
@@ -52,8 +54,19 @@ namespace Challenge.Service.CacheService
                 }
                 return false;
             }
-            catch
+            catch (JsonException ex)
             {
+                UIHelper.ShowError(ex);
+                return false;
+            }
+            catch (HttpRequestException ex)
+            {
+                UIHelper.ShowError(ex);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                UIHelper.ShowError(ex);
                 return false;
             }
         }
@@ -67,8 +80,17 @@ namespace Challenge.Service.CacheService
                 _cache[key] = new CacheEntry { Value = value, CreatedAt = DateTime.UtcNow };
                 CleanupCache();
             }
-            catch
+            catch (JsonException ex)
             {
+                UIHelper.ShowError(ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                UIHelper.ShowError(ex);
+            }
+            catch (Exception ex)
+            {
+                UIHelper.ShowError(ex);
             }
         }
 
@@ -78,9 +100,17 @@ namespace Challenge.Service.CacheService
             {
                 _cache.Clear();
             }
-            catch
+            catch (JsonException ex)
             {
-
+                UIHelper.ShowError(ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                UIHelper.ShowError(ex);
+            }
+            catch (Exception ex)
+            {
+                UIHelper.ShowError(ex);
             }
         }
 
